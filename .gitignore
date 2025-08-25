@@ -1,0 +1,4 @@
+# Project exclude paths
+/backend/api-gateway/target/
+/backend/config-server/target/
+/backend/eureka-server/target/
