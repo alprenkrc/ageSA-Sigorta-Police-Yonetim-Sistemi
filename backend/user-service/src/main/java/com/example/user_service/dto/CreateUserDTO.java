@@ -26,6 +26,9 @@ public class CreateUserDTO {
     @Schema(description = "Telefon numarası", example = "+905551234567", required = true)
     private String phoneNumber;
     
+    @Schema(description = "TC Kimlik Numarası", example = "12345678901", required = true)
+    private String tckn;
+    
     @Schema(description = "Adres", example = "İstanbul, Türkiye")
     private String address;
 }

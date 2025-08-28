@@ -35,6 +35,9 @@ public class User {
     @Column(unique = true, nullable = false)
     private String phoneNumber;
     
+    @Column(unique = true, nullable = false, length = 11)
+    private String tckn;
+    
     private String address;
     
     @CreationTimestamp

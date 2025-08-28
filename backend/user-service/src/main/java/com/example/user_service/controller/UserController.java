@@ -62,6 +62,21 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
     
+    @Operation(summary = "TCKN ile kullanıcı getir", description = "Belirtilen TC Kimlik Numarasına sahip kullanıcıyı getirir")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Kullanıcı bulundu",
+                    content = @Content(schema = @Schema(implementation = UserDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Kullanıcı bulunamadı veya geçersiz TCKN"),
+            @ApiResponse(responseCode = "400", description = "Geçersiz TCKN formatı")
+    })
+    @GetMapping("/tckn/{tckn}")
+    public ResponseEntity<UserDTO> getUserByTckn(
+            @Parameter(description = "TC Kimlik Numarası", example = "12345678901") @PathVariable String tckn) {
+        return userService.getUserByTckn(tckn)
+                .map(user -> ResponseEntity.ok(user))
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
     @Operation(summary = "Yeni kullanıcı oluştur", description = "Sistemde yeni bir kullanıcı oluşturur")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Kullanıcı başarıyla oluşturuldu",

@@ -4,6 +4,7 @@ import com.example.user_service.dto.CreateUserDTO;
 import com.example.user_service.dto.UserDTO;
 import com.example.user_service.entity.User;
 import com.example.user_service.repository.UserRepository;
+import com.example.user_service.util.TCKNValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,15 @@ public class UserService {
                 .map(this::convertToDTO);
     }
     
+    public Optional<UserDTO> getUserByTckn(String tckn) {
+        String validatedTCKN = TCKNValidator.validateAndFormat(tckn);
+        if (validatedTCKN == null) {
+            return Optional.empty();
+        }
+        return userRepository.findByTckn(validatedTCKN)
+                .map(this::convertToDTO);
+    }
+    
     public UserDTO createUser(CreateUserDTO createUserDTO) {
         if (userRepository.existsByEmail(createUserDTO.getEmail())) {
             throw new RuntimeException("Email already exists");
@@ -42,12 +52,23 @@ public class UserService {
             throw new RuntimeException("Phone number already exists");
         }
         
+        // TCKN doğrulaması
+        String validatedTCKN = TCKNValidator.validateAndFormat(createUserDTO.getTckn());
+        if (validatedTCKN == null) {
+            throw new RuntimeException("Invalid TCKN");
+        }
+        
+        if (userRepository.existsByTckn(validatedTCKN)) {
+            throw new RuntimeException("TCKN already exists");
+        }
+        
         User user = new User();
         user.setEmail(createUserDTO.getEmail());
         user.setFirstName(createUserDTO.getFirstName());
         user.setLastName(createUserDTO.getLastName());
         user.setPassword(createUserDTO.getPassword()); // In real app, encode this
         user.setPhoneNumber(createUserDTO.getPhoneNumber());
+        user.setTckn(validatedTCKN);
         user.setAddress(createUserDTO.getAddress());
         
         User savedUser = userRepository.save(user);
@@ -57,10 +78,22 @@ public class UserService {
     public Optional<UserDTO> updateUser(Long id, CreateUserDTO updateUserDTO) {
         return userRepository.findById(id)
                 .map(user -> {
+                    // TCKN doğrulaması
+                    String validatedTCKN = TCKNValidator.validateAndFormat(updateUserDTO.getTckn());
+                    if (validatedTCKN == null) {
+                        throw new RuntimeException("Invalid TCKN");
+                    }
+                    
+                    // Mevcut kullanıcının TCKN'i değişiyorsa ve yeni TCKN başka birinde varsa hata ver
+                    if (!user.getTckn().equals(validatedTCKN) && userRepository.existsByTckn(validatedTCKN)) {
+                        throw new RuntimeException("TCKN already exists");
+                    }
+                    
                     user.setEmail(updateUserDTO.getEmail());
                     user.setFirstName(updateUserDTO.getFirstName());
                     user.setLastName(updateUserDTO.getLastName());
                     user.setPhoneNumber(updateUserDTO.getPhoneNumber());
+                    user.setTckn(validatedTCKN);
                     user.setAddress(updateUserDTO.getAddress());
                     return convertToDTO(userRepository.save(user));
                 });
@@ -81,6 +114,7 @@ public class UserService {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setTckn(user.getTckn());
         dto.setAddress(user.getAddress());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
